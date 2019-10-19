@@ -15,3 +15,5 @@ freeglut3-dev
 libx11-6
 python-opengl
 x11-xserver-utils
+tensorflow-gpu
+keras
