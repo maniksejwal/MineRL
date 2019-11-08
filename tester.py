@@ -18,7 +18,7 @@ import minerl
 from utility.parser import Parser
 
 import coloredlogs
-coloredlogs.install(logging.DEBUG)
+#coloredlogs.install(logging.DEBUG)
 
 # All the evaluations will be evaluated on MineRLObtainDiamond-v0 environment
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLObtainDiamond-v0')
@@ -44,7 +44,7 @@ parser = Parser('performance/',
                 submission_timeout=MINERL_TRAINING_TIMEOUT*60,
                 initial_poll_timeout=600)
 
-print("time = ", time.time()-t)
+print("time0 = ", time.time()-t)
 
 def main():
     """
@@ -59,32 +59,17 @@ def main():
 
     actions = [env.action_space.sample() for _ in range(10)] # Just doing 10 samples in this example
     xposes = []
-    print(actions)
+    print("actions = ", actions)
 
     netr = 0
-    for obs, rew, done, act in data.sarsd_iter(num_epochs=1):
-        print("obs =", obs, ", rew =", rew, ", done =", done, ", act =", act)
-        # random_act = env.action_space.noop()
-        # random_act['camera'] = [random.uniform(-1, 2), random.uniform(-1, 2)]
-        # random_act['back'] = random.choice([0, 1])
-        # random_act['forward'] = 1
-        # random_act['right'] = random.choice([0, 1])
-        # random_act['left'] = 0  # random.choice([0,1])
-        # random_act['jump'] = random.choice([0, 0, 0, 0, 0, 0, 0, 1])
-        # random_act['attack'] = 1
-        # random_act['craft'] = random.choice([0, 1])
-        # random_act['equip'] = random.choice([0, 1])
-        # random_act['nearbyCraft'] = 0
-        # random_act['nearbySmelt'] = 0
-        # random_act['place'] = random.choice([0, 1])
-        # random_act['sneak'] = 0
-        # random_act['sprint'] = random.choice([0, 1])
+    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=3):
+        #print("state =", state, ", action =", action, ", reward =", reward, ", next_state =", next_state, ", done = ", done)
 
-        # print(reward)
-        rewards.append(rew)
-        netr += rew
-        print(netr)
-        env.render()
+        print(reward)
+        rewards.append(reward)
+        netr += sum(reward)
+        print("net reward = ", netr)
+        #env.render()
 
     # for _ in range(1):
     #     obs = env.reset()
@@ -98,23 +83,24 @@ def main():
     #         i+=1
     #
     #         random_act = env.action_space.noop()
-    #         random_act['camera'] = [random.uniform(-1, 2), random.uniform(-1, 2)]
-    #         random_act['back'] = random.choice([0,1])
+    #         random_act['camera'] = [0,1]#[random.uniform(-1, 2), random.uniform(-1, 2)]
+    #         random_act['back'] = random.choice([0,0,0,0,00,0,0,0,1])#[0,1]
     #         random_act['forward'] = 1
-    #         random_act['right'] = random.choice([0,1])
+    #         random_act['right'] = random.choice([0,0,0,0,0,0,0,0,0,1])#[0,1]
     #         random_act['left'] = 0#random.choice([0,1])
-    #         random_act['jump'] = random.choice([0,0,0,0,0,0,0,1])
+    #         random_act['jump'] = random.choice([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
     #         random_act['attack'] = 1
     #         random_act['craft'] = random.choice([0,1])
     #         random_act['equip'] = random.choice([0,1])
     #         random_act['nearbyCraft'] = 0
     #         random_act['nearbySmelt'] = 0
-    #         random_act['place'] = random.choice([0,1])
+    #         random_act['place'] = random.choice([0,0,0,0,0,0,0,0,0,0,0,1])#[0,1]
     #         random_act['sneak'] = 0
     #         random_act['sprint'] = random.choice([0,1])
     #
     #         #print(random_act)
-    #         obs, reward, done, info = env.step(random_act)#random.choice(random_act))
+    #         obs, reward, done, info = env.step(random_act)
+    #         reward = random.choice([0,0,0,0,0,0,0,0,0,0,0.1,0,0,0,0,0,0,0.2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.3])
     #         #print("obs = ", obs)
     #         rewards.append(reward)
     #
@@ -134,7 +120,7 @@ def main():
     #         # Example: {'state': 'RUNNING', 'score': {'score': 0.0, 'score_secondary': 0.0}, 'instances': {'1': {'totalNumberSteps': 2001, 'totalNumberEpisodes': 0, 'currentEnvironment': 'MineRLObtainDiamond-v0', 'state': 'IN_PROGRESS', 'episodes': [{'numTicks': 2001, 'environment': 'MineRLObtainDiamond-v0', 'rewards': 0.0, 'state': 'IN_PROGRESS'}], 'score': {'score': 0.0, 'score_secondary': 0.0}}}}
     #         # .current_state: provide indepth state information avaiable as dictionary (key: instance id)
     #
-    #     print("done =", done)
+    #     #print("done =", done)
 
     # Save trained model to train/ directory
     # Training 100% Completed
@@ -144,11 +130,11 @@ def main():
 # run.py
 import os
 EVALUATION_RUNNING_ON = os.getenv('EVALUATION_RUNNING_ON', None)
-EVALUATION_STAGE = os.getenv('EVALUATION_STAGE', 'all')
+EVALUATION_STAGE = os.getenv('EVALUATION_STAGE', 'training')#''all')
 EXITED_SIGNAL_PATH = os.getenv('EXITED_SIGNAL_PATH', 'shared/exited')
 
 # Training Phase
-if EVALUATION_STAGE in ['all', 'training']:
+if EVALUATION_STAGE in ['training']:#['all', 'training']:
     aicrowd_helper.training_start()
     #main()
     if i == 0:
@@ -157,5 +143,6 @@ if EVALUATION_STAGE in ['all', 'training']:
             main()
             aicrowd_helper.training_end()
         except Exception as e:
+            print("__aicrowd_helper.training_error()__")
             aicrowd_helper.training_error()
             print(e)
