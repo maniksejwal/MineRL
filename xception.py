@@ -18,7 +18,8 @@ is also different (same as Inception V3).
 from keras import layers, models
 import minerl
 
-def Xception(inputs=None, actions=None, weights_path=None):
+
+def Xception(img_input=None):
     """Instantiates the Xception architecture.
 
     Optionally loads weights pre-trained on ImageNet.
@@ -66,8 +67,6 @@ def Xception(inputs=None, actions=None, weights_path=None):
         RuntimeError: If attempting to run this model with a
             backend that does not support separable convolutions.
     """
-
-    img_input = layers.Input(shape=(64, 64, 3))
 
     x = layers.Conv2D(8, (3, 3), strides=(2, 2), use_bias=False, name='block1_conv1')(img_input)
     x = layers.BatchNormalization(name='block1_conv1_bn')(x)
@@ -189,18 +188,79 @@ def Xception(inputs=None, actions=None, weights_path=None):
     x = layers.Activation('relu', name='block14_sepconv2_act')(x)
 
     x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
-    x = layers.Dense(15, activation='sigmoid', name='predictions')(x)
+    x = layers.Dense(15, activation='sigmoid', name='xception_output')(x)
 
     # Create model.
     model = models.Model(img_input, x, name='xception')
-    model.compile()                                                     # TODO
-    if weights_path != None: model.load_weights(weights_path)
+    #model.compile(optimizer='adam', loss='mean_squared_error')
+    #if weights_path != None: model.load_weights(weights_path)
 
     return model
 
 
+def fancy_nn(weights_path=None):
+    """Instantiates the Xception architecture.
+
+        Optionally loads weights pre-trained on ImageNet.
+        Note that the data format convention used by the model is
+        the one specified in your Keras config at `~/.keras/keras.json`.
+
+        Note that the default input image size for this model is 299x299.
+
+        # Arguments
+            weights_path = None:
+                Path from where weights are to be loaded into the model after compilation.
+
+        # Returns
+            A Keras model instance.
+
+        ## Raises
+        #    ValueError: in case of invalid argument for `weights`,
+        #        or invalid input shape.
+        #    RuntimeError: If attempting to run this model with a
+        #        backend that does not support separable convolutions.
+        """
+
+    vanilla_input = layers.Input(shape=(21,))
+    img_input = layers.Input(shape=(64, 64, 3))
+
+    vanilla = layers.Dense(15, name='hidden')(vanilla_input)
+    vanilla = models.Model(inputs=vanilla_input, outputs=vanilla, name='vanilla_hidden')
+
+    x = layers.concatenate([vanilla.output, Xception(img_input).output], name='hidden_concatenated')
+
+    binary_output = layers.Dense(13, name='binary_prediction')(x)
+    linear_output = layers.Dense(2, activation='linear', name='linear_prediction')(x)
+
+    binary_model = models.Model(inputs=[vanilla_input, img_input], outputs=binary_output)
+    linear_model = models.Model(inputs=[vanilla_input, img_input], outputs=linear_output)
+
+    model = models.Model(inputs=[vanilla_input, img_input], outputs=[binary_model.output, linear_model.output])
+
+    model.compile(optimizer='adam', loss='mean_squared_error')
+    if weights_path != None: model.load_weights(weights_path)
+
+    return model
+
 if __name__ == '__main__':
-        Xception(minerl.env.obtain_observation_space, minerl.env.obtain_action_space.sample())
-    # for i in range(10):
-    #     print(minerl.env.obtain_action_space.sample())
-    #     #[('attack', 1), ('back', 1), ('camera', array([134.4457 , 173.21553], dtype=float32)), ('craft', 1), ('equip', 5), ('forward', 1), ('jump', 0), ('left', 0), ('nearbyCraft', 3), ('nearbySmelt', 0), ('place', 1), ('right', 0), ('sneak', 1), ('sprint', 0)]
+    model = fancy_nn()
+    from keras.utils import plot_model
+
+    plot_model(model, to_file='model.png')
+    # Xception(minerl.env.obtain_observation_space, minerl.env.obtain_action_space.sample())
+    #for i in range(10):
+        # print(minerl.env.obtain_action_space.sample())
+        # [('attack', 1), ('back', 1), ('camera', array([134.4457 , 173.21553], dtype=float32)), ('craft', 1), ('equip', 5), ('forward', 1), ('jump', 0), ('left', 0), ('nearbyCraft', 3), ('nearbySmelt', 0), ('place', 1), ('right', 0), ('sneak', 1), ('sprint', 0)]
+        # [('attack', 1), ('back', 1), ('camera', array([-11.986441, -67.31623 ], dtype=float32)), ('craft', 0), ('equip', 0), ('forward', 1), ('jump', 0), ('left', 1), ('nearbyCraft', 5), ('nearbySmelt', 2), ('place', 3), ('right', 1), ('sneak', 0), ('sprint', 0)]
+        # [('attack', 1), ('back', 1), ('camera', array([ 114.31422, -140.80772], dtype=float32)), ('craft', 4), ('equip', 5), ('forward', 0), ('jump', 1), ('left', 0), ('nearbyCraft', 7), ('nearbySmelt', 1), ('place', 2), ('right', 1), ('sneak', 1), ('sprint', 1)]
+        # [('attack', 0), ('back', 0), ('camera', array([  71.87382, -169.42906], dtype=float32)), ('craft', 4), ('equip', 3), ('forward', 1), ('jump', 0), ('left', 1), ('nearbyCraft', 7), ('nearbySmelt', 0), ('place', 2), ('right', 1), ('sneak', 1), ('sprint', 0)]
+        # [('attack', 0), ('back', 0), ('camera', array([  -0.22040889, -108.96448   ], dtype=float32)), ('craft', 1), ('equip', 4), ('forward', 0), ('jump', 1), ('left', 1), ('nearbyCraft', 6), ('nearbySmelt', 0), ('place', 2), ('right', 0), ('sneak', 1), ('sprint', 1)]
+        # [('attack', 1), ('back', 0), ('camera', array([ 42.048176, 114.77076 ], dtype=float32)), ('craft', 0), ('equip', 0), ('forward', 1), ('jump', 1), ('left', 0), ('nearbyCraft', 2), ('nearbySmelt', 1), ('place', 5), ('right', 0), ('sneak', 0), ('sprint', 1)]
+        # [('attack', 0), ('back', 1), ('camera', array([  28.670277, -154.99754 ], dtype=float32)), ('craft', 4), ('equip', 2), ('forward', 0), ('jump', 0), ('left', 0), ('nearbyCraft', 7), ('nearbySmelt', 2), ('place', 6), ('right', 0), ('sneak', 0), ('sprint', 0)]
+        # [('attack', 0), ('back', 1), ('camera', array([-137.78952,  159.17415], dtype=float32)), ('craft', 1), ('equip', 1), ('forward', 0), ('jump', 1), ('left', 1), ('nearbyCraft', 0), ('nearbySmelt', 1), ('place', 5), ('right', 1), ('sneak', 0), ('sprint', 1)]
+        # [('attack', 0), ('back', 0), ('camera', array([ 38.89587, 148.0062 ], dtype=float32)), ('craft', 0), ('equip', 6), ('forward', 1), ('jump', 1), ('left', 1), ('nearbyCraft', 2), ('nearbySmelt', 1), ('place', 0), ('right', 0), ('sneak', 0), ('sprint', 1)]
+        # [('attack', 1), ('back', 0), ('camera', array([158.30092 ,  84.317894], dtype=float32)), ('craft', 4), ('equip', 3), ('forward', 1), ('jump', 0), ('left', 0), ('nearbyCraft', 4), ('nearbySmelt', 2), ('place', 1), ('right', 1), ('sneak', 0), ('sprint', 0)]
+        # [('attack', 0), ('back', 0), ('camera', array([-135.29819,  -26.28303], dtype=float32)), ('craft', 3), ('equip', 0), ('forward', 1), ('jump', 1), ('left', 1), ('nearbyCraft', 3), ('nearbySmelt', 2), ('place', 5), ('right', 0), ('sneak', 1), ('sprint', 0)]
+        #print(minerl.env.obtain_observation_space.sample())
+        # [('equipped_items', OrderedDict([('mainhand', OrderedDict([('damage', array(291)), ('maxDamage', array(136)), ('type', 7)]))])), ('inventory', OrderedDict([('coal', array(1777)), ('cobblestone', array(2185)), ('crafting_table', array(926)), ('dirt', array(2150)), ('furnace', array(1135)), ('iron_axe', array(547)), ('iron_ingot', array(446)), ('iron_ore', array(1711)), ('iron_pickaxe', array(984)), ('log', array(1037)), ('planks', array(1337)), ('stick', array(1221)), ('stone', array(713)), ('stone_axe', array(315)), ('stone_pickaxe', array(2070)), ('torch', array(364)), ('wooden_axe', array(1056)), ('wooden_pickaxe', array(2145))]))]
+        # 21 items
