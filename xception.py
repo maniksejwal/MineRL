@@ -16,9 +16,9 @@ is also different (same as Inception V3).
 """
 
 from keras import layers, models
-import tensorflow
+import minerl
 
-def Xception(actions=None, weights_path=None):
+def Xception(inputs=None, actions=None, weights_path=None):
     """Instantiates the Xception architecture.
 
     Optionally loads weights pre-trained on ImageNet.
@@ -67,41 +67,40 @@ def Xception(actions=None, weights_path=None):
             backend that does not support separable convolutions.
     """
 
-    img_input = layers.Input(shape=(64,64,3))
-    channel_axis = 1
+    img_input = layers.Input(shape=(64, 64, 3))
 
     x = layers.Conv2D(8, (3, 3), strides=(2, 2), use_bias=False, name='block1_conv1')(img_input)
-    x = layers.BatchNormalization(axis=channel_axis, name='block1_conv1_bn')(x)
+    x = layers.BatchNormalization(name='block1_conv1_bn')(x)
     x = layers.Activation('relu', name='block1_conv1_act')(x)
 
     x = layers.Conv2D(16, (3, 3), use_bias=False, name='block1_conv2')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block1_conv2_bn')(x)
+    x = layers.BatchNormalization(name='block1_conv2_bn')(x)
     x = layers.Activation('relu', name='block1_conv2_act')(x)
 
     residual = layers.Conv2D(32, (1, 1), strides=(2, 2), padding='same', use_bias=False)(x)
-    residual = layers.BatchNormalization(axis=channel_axis)(residual)
+    residual = layers.BatchNormalization()(residual)
 
     x = layers.SeparableConv2D(32, (3, 3), padding='same', use_bias=False, name='block2_sepconv1')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block2_sepconv1_bn')(x)
+    x = layers.BatchNormalization(name='block2_sepconv1_bn')(x)
     x = layers.Activation('relu', name='block2_sepconv2_act')(x)
 
     x = layers.SeparableConv2D(32, (3, 3), padding='same', use_bias=False, name='block2_sepconv2')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block2_sepconv2_bn')(x)
+    x = layers.BatchNormalization(name='block2_sepconv2_bn')(x)
 
     x = layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same', name='block2_pool')(x)
     x = layers.add([x, residual])
 
     residual = layers.Conv2D(64, (1, 1), strides=(2, 2), padding='same', use_bias=False)(x)
-    residual = layers.BatchNormalization(axis=channel_axis)(residual)
+    residual = layers.BatchNormalization()(residual)
 
     x = layers.Activation('relu', name='block3_sepconv1_act')(x)
 
     x = layers.SeparableConv2D(64, (3, 3), padding='same', use_bias=False, name='block3_sepconv1')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block3_sepconv1_bn')(x)
+    x = layers.BatchNormalization(name='block3_sepconv1_bn')(x)
     x = layers.Activation('relu', name='block3_sepconv2_act')(x)
 
     x = layers.SeparableConv2D(64, (3, 3), padding='same', use_bias=False, name='block3_sepconv2')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block3_sepconv2_bn')(x)
+    x = layers.BatchNormalization(name='block3_sepconv2_bn')(x)
 
     x = layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same', name='block3_pool')(x)
     x = layers.add([x, residual])
@@ -110,16 +109,16 @@ def Xception(actions=None, weights_path=None):
                              strides=(2, 2),
                              padding='same',
                              use_bias=False)(x)
-    residual = layers.BatchNormalization(axis=channel_axis)(residual)
+    residual = layers.BatchNormalization()(residual)
 
     x = layers.Activation('relu', name='block4_sepconv1_act')(x)
 
     x = layers.SeparableConv2D(128, (3, 3), padding='same', use_bias=False, name='block4_sepconv1')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block4_sepconv1_bn')(x)
+    x = layers.BatchNormalization(name='block4_sepconv1_bn')(x)
     x = layers.Activation('relu', name='block4_sepconv2_act')(x)
 
     x = layers.SeparableConv2D(128, (3, 3), padding='same', use_bias=False, name='block4_sepconv2')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block4_sepconv2_bn')(x)
+    x = layers.BatchNormalization(name='block4_sepconv2_bn')(x)
 
     x = layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same', name='block4_pool')(x)
     x = layers.add([x, residual])
@@ -133,41 +132,41 @@ def Xception(actions=None, weights_path=None):
     #                                padding='same',
     #                                use_bias=False,
     #                                name=prefix + '_sepconv1')(x)
-    #     x = layers.BatchNormalization(axis=channel_axis,
+    #     x = layers.BatchNormalization(
     #                                   name=prefix + '_sepconv1_bn')(x)
     #     x = layers.Activation('relu', name=prefix + '_sepconv2_act')(x)
     #     x = layers.SeparableConv2D(728, (3, 3),
     #                                padding='same',
     #                                use_bias=False,
     #                                name=prefix + '_sepconv2')(x)
-    #     x = layers.BatchNormalization(axis=channel_axis,
+    #     x = layers.BatchNormalization(
     #                                   name=prefix + '_sepconv2_bn')(x)
     #     x = layers.Activation('relu', name=prefix + '_sepconv3_act')(x)
     #     x = layers.SeparableConv2D(728, (3, 3),
     #                                padding='same',
     #                                use_bias=False,
     #                                name=prefix + '_sepconv3')(x)
-    #     x = layers.BatchNormalization(axis=channel_axis,
+    #     x = layers.BatchNormalization(
     #                                   name=prefix + '_sepconv3_bn')(x)
     #
     #     x = layers.add([x, residual])
 
     residual = layers.Conv2D(256, (1, 1), strides=(2, 2),
                              padding='same', use_bias=False)(x)
-    residual = layers.BatchNormalization(axis=channel_axis)(residual)
+    residual = layers.BatchNormalization()(residual)
 
     x = layers.Activation('relu', name='block13_sepconv1_act')(x)
     x = layers.SeparableConv2D(256, (3, 3),
                                padding='same',
                                use_bias=False,
                                name='block13_sepconv1')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block13_sepconv1_bn')(x)
+    x = layers.BatchNormalization(name='block13_sepconv1_bn')(x)
     x = layers.Activation('relu', name='block13_sepconv2_act')(x)
     x = layers.SeparableConv2D(256, (3, 3),
                                padding='same',
                                use_bias=False,
                                name='block13_sepconv2')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block13_sepconv2_bn')(x)
+    x = layers.BatchNormalization(name='block13_sepconv2_bn')(x)
 
     x = layers.MaxPooling2D((3, 3),
                             strides=(2, 2),
@@ -179,27 +178,29 @@ def Xception(actions=None, weights_path=None):
                                padding='same',
                                use_bias=False,
                                name='block14_sepconv1')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block14_sepconv1_bn')(x)
+    x = layers.BatchNormalization(name='block14_sepconv1_bn')(x)
     x = layers.Activation('relu', name='block14_sepconv1_act')(x)
 
     x = layers.SeparableConv2D(256, (3, 3),
                                padding='same',
                                use_bias=False,
                                name='block14_sepconv2')(x)
-    x = layers.BatchNormalization(axis=channel_axis, name='block14_sepconv2_bn')(x)
+    x = layers.BatchNormalization(name='block14_sepconv2_bn')(x)
     x = layers.Activation('relu', name='block14_sepconv2_act')(x)
 
     x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
-    x = layers.Dense(actions, activation='softmax', name='predictions')(x)
-
-    inputs = img_input
+    x = layers.Dense(15, activation='sigmoid', name='predictions')(x)
 
     # Create model.
-    model = models.Model(inputs, x, name='xception')
-
+    model = models.Model(img_input, x, name='xception')
+    model.compile()                                                     # TODO
     if weights_path != None: model.load_weights(weights_path)
 
     return model
 
+
 if __name__ == '__main__':
-    Xception([True, False])
+        Xception(minerl.env.obtain_observation_space, minerl.env.obtain_action_space.sample())
+    # for i in range(10):
+    #     print(minerl.env.obtain_action_space.sample())
+    #     #[('attack', 1), ('back', 1), ('camera', array([134.4457 , 173.21553], dtype=float32)), ('craft', 1), ('equip', 5), ('forward', 1), ('jump', 0), ('left', 0), ('nearbyCraft', 3), ('nearbySmelt', 0), ('place', 1), ('right', 0), ('sneak', 1), ('sprint', 0)]
