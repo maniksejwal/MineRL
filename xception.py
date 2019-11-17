@@ -17,7 +17,7 @@ is also different (same as Inception V3).
 
 from keras import layers, models
 import minerl
-
+import numpy as np
 
 def Xception(img_input=None):
     """Instantiates the Xception architecture.
@@ -229,8 +229,8 @@ def fancy_nn(weights_path=None):
 
     x = layers.concatenate([vanilla.output, Xception(img_input).output], name='hidden_concatenated')
 
-    binary_output = layers.Dense(13, name='binary_prediction')(x)
-    linear_output = layers.Dense(2, activation='linear', name='linear_prediction')(x)
+    binary_output = layers.Dense(8, name='binary_prediction')(x)
+    linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
 
     binary_model = models.Model(inputs=[vanilla_input, img_input], outputs=binary_output)
     linear_model = models.Model(inputs=[vanilla_input, img_input], outputs=linear_output)
@@ -301,12 +301,11 @@ def outputs_to_action(outputs):
     linear_labels = outputs[1]
 
     from collections import OrderedDict
-    from numpy import array, float32
 
     action = OrderedDict({
         'attack': binary_labels[0],
         'back': binary_labels[1],
-        'camera': array([linear_labels[0][0], linear_labels[0][1]], dtype=float32),
+        'camera': np.array([linear_labels[0][0], linear_labels[0][1]], dtype=np.float32),
         'craft': linear_labels[1],
         'equip': linear_labels[2],
         'forward': binary_labels[2],
@@ -330,7 +329,9 @@ if __name__ == '__main__':
     # plot_model(model, to_file='model.png')
 
     inputs = state_to_inputs(minerl.env.obtain_observation_space.sample())
+    inputs = [np.array(inputs[0]).reshape((-1,21)), np.array(inputs[1]).reshape((-1,64,64,3))]
     labels = label_to_output(minerl.env.obtain_action_space.sample())
+    labels = [np.array(labels[0]).reshape((-1, 8)), np.array(labels[1]).reshape((-1, 7))]
 
     # print(len(inputs))
     # print(inputs)
@@ -344,6 +345,8 @@ if __name__ == '__main__':
     # print('\n')
 
     predictions = model.predict(inputs)
+    print(predictions)
+    model.fit(inputs, labels, batch_size=1)
     # action = outputs_to_action(predictions)
     # print(action)
 
