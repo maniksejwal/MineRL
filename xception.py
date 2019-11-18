@@ -19,6 +19,7 @@ from keras import layers, models
 import minerl
 import numpy as np
 
+
 def Xception(img_input=None):
     """Instantiates the Xception architecture.
 
@@ -245,27 +246,27 @@ def fancy_nn(weights_path=None):
 
 def state_to_inputs(state):
     linear_inputs = [
-        int(state['equipped_items']['mainhand']['damage']),
-        int(state['equipped_items']['mainhand']['maxDamage']),
-        int(state['equipped_items']['mainhand']['type']),
-        int(state['inventory']['coal']),
-        int(state['inventory']['cobblestone']),
-        int(state['inventory']['crafting_table']),
-        int(state['inventory']['dirt']),
-        int(state['inventory']['furnace']),
-        int(state['inventory']['iron_axe']),
-        int(state['inventory']['iron_ingot']),
-        int(state['inventory']['iron_ore']),
-        int(state['inventory']['iron_pickaxe']),
-        int(state['inventory']['log']),
-        int(state['inventory']['planks']),
-        int(state['inventory']['stick']),
-        int(state['inventory']['stone']),
-        int(state['inventory']['stone_axe']),
-        int(state['inventory']['stone_pickaxe']),
-        int(state['inventory']['torch']),
-        int(state['inventory']['wooden_axe']),
-        int(state['inventory']['wooden_pickaxe'])
+        state['equipped_items']['mainhand']['damage'],
+        state['equipped_items']['mainhand']['maxDamage'],
+        state['equipped_items']['mainhand']['type'],
+        state['inventory']['coal'],
+        state['inventory']['cobblestone'],
+        state['inventory']['crafting_table'],
+        state['inventory']['dirt'],
+        state['inventory']['furnace'],
+        state['inventory']['iron_axe'],
+        state['inventory']['iron_ingot'],
+        state['inventory']['iron_ore'],
+        state['inventory']['iron_pickaxe'],
+        state['inventory']['log'],
+        state['inventory']['planks'],
+        state['inventory']['stick'],
+        state['inventory']['stone'],
+        state['inventory']['stone_axe'],
+        state['inventory']['stone_pickaxe'],
+        state['inventory']['torch'],
+        state['inventory']['wooden_axe'],
+        state['inventory']['wooden_pickaxe']
     ]
 
     img_input = state['pov']
@@ -273,27 +274,47 @@ def state_to_inputs(state):
     return [linear_inputs, img_input]
 
 
-def label_to_output(labels):
-    binary_labels = []
-    binary_labels.append(labels['attack'])
-    binary_labels.append(labels['back'])
-    binary_labels.append(labels['forward'])
-    binary_labels.append(labels['jump'])
-    binary_labels.append(labels['left'])
-    binary_labels.append(labels['right'])
-    binary_labels.append(labels['sneak'])
-    binary_labels.append(labels['sprint'])
+def reshape_inputs(inputs):
+    linear_inputs = inputs[0]
+    img_inputs = inputs[1]
 
-    linear_labels = []
-    linear_labels.append(int(labels['camera'][0]))
-    linear_labels.append(int(labels['camera'][1]))
-    linear_labels.append(labels['craft'])
-    linear_labels.append(labels['equip'])
-    linear_labels.append(labels['nearbyCraft'])
-    linear_labels.append(labels['nearbySmelt'])
-    linear_labels.append(labels['place'])
+    return [np.moveaxis(np.array(linear_inputs), -1, 0), np.array(img_inputs)]
+    # return [np.array(linear_inputs).reshape((-1, 21)), np.array(img_inputs).reshape((-1, 64, 64, 3))]
+
+
+def label_to_output(labels):
+    binary_labels = [
+        labels['attack'],
+        labels['back'],
+        labels['forward'],
+        labels['jump'],
+        labels['left'],
+        labels['right'],
+        labels['sneak'],
+        labels['sprint']
+    ]
+
+
+
+    linear_labels = [
+        [i[0] for i in labels['camera']],           #x
+        [i[1] for i in labels['camera']],           #y
+        labels['craft'],
+        labels['equip'],
+        labels['nearbyCraft'],
+        labels['nearbySmelt'],
+        labels['place']
+    ]
 
     return [binary_labels, linear_labels]
+
+
+def reshape_labels(labels):
+    binary_labels = labels[0]
+    linear_labels = labels[1]
+
+    return [np.moveaxis(np.array(binary_labels), -1, 0), np.moveaxis(np.array(linear_labels), -1, 0)]
+    # return [np.array(binary_labels).reshape((-1, 8)), np.array(linear_labels).reshape((-1, 7))]
 
 
 def outputs_to_action(outputs):
@@ -328,10 +349,14 @@ if __name__ == '__main__':
     # from keras.utils import plot_model
     # plot_model(model, to_file='model.png')
 
-    inputs = state_to_inputs(minerl.env.obtain_observation_space.sample())
-    inputs = [np.array(inputs[0]).reshape((-1,21)), np.array(inputs[1]).reshape((-1,64,64,3))]
-    labels = label_to_output(minerl.env.obtain_action_space.sample())
-    labels = [np.array(labels[0]).reshape((-1, 8)), np.array(labels[1]).reshape((-1, 7))]
+    inputs = [state_to_inputs(minerl.env.obtain_observation_space.sample()),
+              state_to_inputs(minerl.env.obtain_observation_space.sample())]
+    inputs = reshape_inputs(inputs)
+    # inputs = [np.array(inputs[0]).reshape((-1,21)), np.array(inputs[1]).reshape((-1,64,64,3))]
+    labels = [label_to_output(minerl.env.obtain_action_space.sample()),
+              label_to_output(minerl.env.obtain_action_space.sample())]
+    labels = reshape_labels(labels)
+    # labels = [np.array(labels[0]).reshape((-1, 8)), np.array(labels[1]).reshape((-1, 7))]
 
     # print(len(inputs))
     # print(inputs)

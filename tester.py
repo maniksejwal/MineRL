@@ -1,8 +1,9 @@
-rewards = []
 import time
 t = time.time()
-import random
 i = 0
+
+import xception
+import numpy as np
 
 # train.py
 # Simple env test.
@@ -39,7 +40,7 @@ parser = Parser('performance/',
                 allowed_environment=MINERL_GYM_ENV,
                 maximum_instances=MINERL_TRAINING_MAX_INSTANCES,
                 maximum_steps=MINERL_TRAINING_MAX_STEPS,
-                raise_on_error=False,
+                raise_on_error=True, # False
                 no_entry_poll_timeout=600,
                 submission_timeout=MINERL_TRAINING_TIMEOUT*60,
                 initial_poll_timeout=600)
@@ -55,20 +56,28 @@ def main():
     data = minerl.data.make(MINERL_GYM_ENV, data_dir=MINERL_DATA_ROOT)
 
     # Sample code for illustration, add your training code below
-    env = gym.make(MINERL_GYM_ENV)
+    #env = gym.make(MINERL_GYM_ENV)
 
-    actions = [env.action_space.sample() for _ in range(10)] # Just doing 10 samples in this example
+    #actions = [env.action_space.sample() for _ in range(10)] # Just doing 10 samples in this example
     xposes = []
-    print("actions = ", actions)
+    #print("actions = ", actions)
+
+    model = xception.fancy_nn()
 
     netr = 0
-    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=3):
+    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=1, max_sequence_len=4096):
         #print("state =", state, ", action =", action, ", reward =", reward, ", next_state =", next_state, ", done = ", done)
+        #print('whocares')
 
-        print(reward)
-        rewards.append(reward)
-        netr += sum(reward)
-        print("net reward = ", netr)
+        inputs = xception.state_to_inputs(state) # returns [linear_inputs, binary_inputs]
+        inputs = xception.reshape_inputs(inputs)
+        #inputs = np.moveaxis(inputs, -1, 0)
+
+        labels = xception.label_to_output(action)
+        labels = xception.reshape_labels(labels)
+        #labels = np.moveaxis(labels, -1, 0)
+
+        model.fit(inputs, labels)
         #env.render()
 
     # for _ in range(1):
@@ -124,8 +133,8 @@ def main():
 
     # Save trained model to train/ directory
     # Training 100% Completed
-    aicrowd_helper.register_progress(1)
-    env.close()
+    #aicrowd_helper.register_progress(1)
+    #env.close()
 
 # run.py
 import os
