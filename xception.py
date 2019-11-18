@@ -347,7 +347,7 @@ if __name__ == '__main__':
     model = fancy_nn()
 
     # from keras.utils import plot_model
-    # plot_model(model, to_file='model.png')
+    # plot_model(model, to_file='model_detailed.png', show_shapes=True)
 
     inputs = [state_to_inputs(minerl.env.obtain_observation_space.sample()),
               state_to_inputs(minerl.env.obtain_observation_space.sample())]
