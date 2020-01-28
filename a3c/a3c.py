@@ -17,6 +17,8 @@ from .utils.continuous_environments import Environment
 from .utils.networks import conv_block
 from .utils.stats import gather_stats
 
+import xception
+
 class A3C:
     """ Asynchronous Actor-Critic Main Algorithm
     """
@@ -25,17 +27,17 @@ class A3C:
         """ Initialization
         """
         # Environment and A3C parameters
-        self.act_dim = act_dim
-        if(is_atari):
-            self.env_dim = env_dim
-        else:
-            self.env_dim = (k,) + env_dim
+        # self.act_dim = act_dim
+        # if(is_atari):
+        #     self.env_dim = env_dim
+        # else:
+        #     self.env_dim = (k,) + env_dim
         self.gamma = gamma
         self.lr = lr
         # Create actor and critic networks
         self.shared = self.buildNetwork()
-        self.actor = Actor(self.env_dim, act_dim, self.shared, lr)
-        self.critic = Critic(self.env_dim, act_dim, self.shared, lr)
+        self.actor = Actor(self.shared, lr)
+        self.critic = Critic(self.shared, lr)
         # Build optimizers
         self.a_opt = self.actor.optimizer()
         self.c_opt = self.critic.optimizer()
@@ -43,6 +45,8 @@ class A3C:
     def buildNetwork(self):
         """ Assemble shared layers
         """
+        return xception.fancy_nn()
+
         inp = Input((self.env_dim))
         # If we have an image, apply convolutional layers
         if(len(self.env_dim) > 2):

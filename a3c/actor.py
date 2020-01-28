@@ -10,8 +10,14 @@ class Actor(Agent):
     """ Actor for the A2C Algorithm
     """
 
-    def __init__(self, inp_dim, out_dim, network, lr):
-        Agent.__init__(self, inp_dim, out_dim, lr)
+    # vanilla_input = layers.Input(shape=(21,))
+    # img_input = layers.Input(shape=(64, 64, 3))
+
+    # binary_output = layers.Dense(8, name='binary_prediction')(x)
+    # linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
+
+    def __init__(self, network, lr):
+        Agent.__init__(self, lr)
         self.model = self.addHead(network)
         self.action_pl = K.placeholder(shape=(None, self.out_dim))
         self.advantages_pl = K.placeholder(shape=(None,))

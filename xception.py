@@ -230,6 +230,8 @@ def fancy_nn(weights_path=None):
 
     x = layers.concatenate([vanilla.output, Xception(img_input).output], name='hidden_concatenated')
 
+    x = layers.Dense(15, name='hidden_hidden')(x)
+
     binary_output = layers.Dense(8, name='binary_prediction')(x)
     linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
 
@@ -294,8 +296,6 @@ def label_to_output(labels):
         labels['sprint']
     ]
 
-
-
     linear_labels = [
         [i[0] for i in labels['camera']],           #x
         [i[1] for i in labels['camera']],           #y
@@ -343,6 +343,7 @@ def outputs_to_action(outputs):
     return action
 
 
+# Does not work
 if __name__ == '__main__':
     model = fancy_nn()
 
@@ -352,11 +353,11 @@ if __name__ == '__main__':
     inputs = [state_to_inputs(minerl.env.obtain_observation_space.sample()),
               state_to_inputs(minerl.env.obtain_observation_space.sample())]
     inputs = reshape_inputs(inputs)
-    # inputs = [np.array(inputs[0]).reshape((-1,21)), np.array(inputs[1]).reshape((-1,64,64,3))]
+    inputs = [np.array(inputs[0]).reshape((-1,21)), np.array(inputs[1]).reshape((-1,64,64,3))]
     labels = [label_to_output(minerl.env.obtain_action_space.sample()),
               label_to_output(minerl.env.obtain_action_space.sample())]
     labels = reshape_labels(labels)
-    # labels = [np.array(labels[0]).reshape((-1, 8)), np.array(labels[1]).reshape((-1, 7))]
+    labels = [np.array(labels[0]).reshape((-1, 8)), np.array(labels[1]).reshape((-1, 7))]
 
     # print(len(inputs))
     # print(inputs)

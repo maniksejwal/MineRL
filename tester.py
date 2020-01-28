@@ -1,5 +1,5 @@
 import time
-t = time.time()
+#t = time.time()
 i = 0
 
 import xception
@@ -45,7 +45,7 @@ parser = Parser('performance/',
                 submission_timeout=MINERL_TRAINING_TIMEOUT*60,
                 initial_poll_timeout=600)
 
-print("time0 = ", time.time()-t)
+#print("time0 = ", time.time()-t)
 
 def main():
     """
@@ -65,7 +65,7 @@ def main():
     model = xception.fancy_nn()
 
     netr = 0
-    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=1, max_sequence_len=4096):
+    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=1, max_sequence_len=2048):
         #print("state =", state, ", action =", action, ", reward =", reward, ", next_state =", next_state, ", done = ", done)
         #print('whocares')
 
@@ -77,7 +77,11 @@ def main():
         labels = xception.reshape_labels(labels)
         #labels = np.moveaxis(labels, -1, 0)
 
+        from keras.utils import plot_model
+        plot_model(model, to_file='model_deep.png', show_shapes=True)
+
         model.fit(inputs, labels)
+        model.save("pretrained_network.hdf5")
         #env.render()
 
     # for _ in range(1):
