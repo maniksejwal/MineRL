@@ -27,9 +27,19 @@ class Actor(Agent):
     def addHead(self, network):
         """ Assemble Actor network to predict probability of each action
         """
-        x = Dense(128, activation='relu')(network.output)
-        out = Dense(self.out_dim, activation='softmax')(x)
-        return Model(network.input, out)
+        x = network.output
+
+        binary_output = Dense(8, name='binary_prediction')(x)
+        linear_output = Dense(7, activation='linear', name='linear_prediction')(x)
+
+        linear_model = Model(inputs=network.input, outputs=linear_output)
+        binary_model = Model(inputs=network.input, outputs=binary_output)
+
+        model = Model(inputs=network.input, outputs=[binary_model.output, linear_model.output])
+        return model
+
+        #out = Dense(self.out_dim, activation='softmax')(x)
+        #return Model(network.input, out)
 
     def optimizer(self):
         """ Actor Optimization: Advantages + Entropy term to encourage exploration

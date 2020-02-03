@@ -20,9 +20,16 @@ class Critic(Agent):
     def addHead(self, network):
         """ Assemble Critic network to predict value of each state
         """
-        x = Dense(128, activation='relu')(network.output)
-        out = Dense(1, activation='linear')(x)
-        return Model(network.input, out)
+        x = network.output
+
+        binary_output = Dense(8, name='binary_prediction')(x)
+        linear_output = Dense(7, activation='linear', name='linear_prediction')(x)
+
+        linear_model = Model(inputs=network.input, outputs=linear_output)
+        binary_model = Model(inputs=network.input, outputs=binary_output)
+
+        model = Model(inputs=network.input, outputs=[binary_model.output, linear_model.output])
+        return model
 
     def optimizer(self):
         """ Critic Optimization: Mean Squared Error over discounted rewards

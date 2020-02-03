@@ -232,13 +232,15 @@ def fancy_nn(weights_path=None):
 
     x = layers.Dense(15, name='hidden_hidden')(x)
 
-    binary_output = layers.Dense(8, name='binary_prediction')(x)
-    linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
+    #binary_output = layers.Dense(8, name='binary_prediction')(x)
+    #linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
 
-    binary_model = models.Model(inputs=[vanilla_input, img_input], outputs=binary_output)
-    linear_model = models.Model(inputs=[vanilla_input, img_input], outputs=linear_output)
+    #binary_model = models.Model(inputs=[vanilla_input, img_input], outputs=binary_output)
+    #linear_model = models.Model(inputs=[vanilla_input, img_input], outputs=linear_output)
 
-    model = models.Model(inputs=[vanilla_input, img_input], outputs=[binary_model.output, linear_model.output])
+    #model = models.Model(inputs=[vanilla_input, img_input], outputs=[binary_model.output, linear_model.output])
+
+    model = models.Model(inputs=[vanilla_input, img_input], outputs=x)
 
     model.compile(optimizer='adam', loss='mean_squared_error')
     if weights_path != None: model.load_weights(weights_path)

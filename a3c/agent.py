@@ -28,6 +28,6 @@ class Agent:
         inp = xception.reshape_inputs(inp)
         return inp
 
-        if len(x.shape) < 4 and len(self.inp_dim) > 2: return np.expand_dims(x, axis=0)
-        elif len(x.shape) < 2: return np.expand_dims(x, axis=0)
-        else: return x
+        # if len(x.shape) < 4 and len(self.inp_dim) > 2: return np.expand_dims(x, axis=0)
+        # elif len(x.shape) < 2: return np.expand_dims(x, axis=0)
+        # else: return x
