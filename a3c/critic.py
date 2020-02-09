@@ -10,8 +10,8 @@ class Critic(Agent):
     """ Critic for the A3C Algorithm
     """
 
-    def __init__(self, inp_dim, out_dim, network, lr):
-        Agent.__init__(self, inp_dim, out_dim, lr)
+    def __init__(self, network, lr):
+        Agent.__init__(self, lr)
         self.model = self.addHead(network)
         self.discounted_r = K.placeholder(shape=(None,))
         # Pre-compile for threading

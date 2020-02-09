@@ -19,7 +19,7 @@ class Actor(Agent):
     def __init__(self, network, lr):
         Agent.__init__(self, lr)
         self.model = self.addHead(network)
-        self.action_pl = K.placeholder(shape=(None, self.out_dim))
+        self.action_pl = K.placeholder(shape=(None, 15))
         self.advantages_pl = K.placeholder(shape=(None,))
         # Pre-compile for threading
         self.model._make_predict_function()
@@ -36,6 +36,7 @@ class Actor(Agent):
         binary_model = Model(inputs=network.input, outputs=binary_output)
 
         model = Model(inputs=network.input, outputs=[binary_model.output, linear_model.output])
+        print(model.outputs)
         return model
 
         #out = Dense(self.out_dim, activation='softmax')(x)
