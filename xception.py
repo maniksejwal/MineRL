@@ -232,6 +232,8 @@ def fancy_nn(weights_path=None):
 
     x = layers.Dense(15, name='hidden_hidden')(x)
 
+    # MOVED INTO ACTOR AND CRITIC
+
     #binary_output = layers.Dense(8, name='binary_prediction')(x)
     #linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
 
@@ -241,6 +243,9 @@ def fancy_nn(weights_path=None):
     #model = models.Model(inputs=[vanilla_input, img_input], outputs=[binary_model.output, linear_model.output])
 
     model = models.Model(inputs=[vanilla_input, img_input], outputs=x)
+
+    from keras.utils import plot_model
+    plot_model(model, to_file='model.png', show_shapes=True)
 
     model.compile(optimizer='adam', loss='mean_squared_error')
     if weights_path != None: model.load_weights(weights_path)

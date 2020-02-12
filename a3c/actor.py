@@ -19,7 +19,9 @@ class Actor(Agent):
     def __init__(self, network, lr):
         Agent.__init__(self, lr)
         self.model = self.addHead(network)
-        self.action_pl = K.placeholder(shape=(None, 15))
+        self.action_pl_bin = K.placeholder(shape=(None, 8))
+        self.action_pl_lin = K.placeholder(shape=(None, 8))
+        self.action_pl = K.concatenate([self.action_pl_bin, self.action_pl_lin])
         self.advantages_pl = K.placeholder(shape=(None,))
         # Pre-compile for threading
         self.model._make_predict_function()
@@ -30,12 +32,12 @@ class Actor(Agent):
         x = network.output
 
         binary_output = Dense(8, name='binary_prediction')(x)
-        linear_output = Dense(7, activation='linear', name='linear_prediction')(x)
+        linear_output = Dense(8, activation='linear', name='linear_prediction')(x)                      # needs 7
 
-        linear_model = Model(inputs=network.input, outputs=linear_output)
-        binary_model = Model(inputs=network.input, outputs=binary_output)
+        self.linear_model = Model(inputs=network.input, outputs=linear_output)
+        self.binary_model = Model(inputs=network.input, outputs=binary_output)
 
-        model = Model(inputs=network.input, outputs=[binary_model.output, linear_model.output])
+        model = Model(inputs=network.input, outputs=[self.binary_model.output, self.linear_model.output])
         print(model.outputs)
         return model
 
@@ -46,9 +48,10 @@ class Actor(Agent):
         """ Actor Optimization: Advantages + Entropy term to encourage exploration
         (Cf. https://arxiv.org/abs/1602.01783)
         """
-        weighted_actions = K.sum(self.action_pl * self.model.output, axis=1)
-        eligibility = K.log(weighted_actions + 1e-10) * K.stop_gradient(self.advantages_pl)
-        entropy = K.sum(self.model.output * K.log(self.model.output + 1e-10), axis=1)
+        weighted_actions_bin = K.sum(self.action_pl_bin * self.binary_model.output, axis=1)
+        weighted_actions_lin = K.sum(self.action_pl_lin * self.linear_model.output, axis=1)
+        eligibility = K.log(weighted_actions_bin + 1e-10) * K.log(weighted_actions_lin + 1e-15) * K.stop_gradient(self.advantages_pl)
+        entropy = K.sum(self.linear_model.output * K.log(self.binary_model.output + 1e-10), axis=1)
         loss = 0.001 * entropy - K.sum(eligibility)
 
         updates = self.rms_optimizer.get_updates(self.model.trainable_weights, [], loss)
