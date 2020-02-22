@@ -23,7 +23,7 @@ class A3C:
     """ Asynchronous Actor-Critic Main Algorithm
     """
 
-    def __init__(self, act_dim, env_dim, k, gamma = 0.99, lr = 0.0001, is_atari=False):
+    def __init__(self, gamma = 0.99, lr = 0.0001, is_atari=False):
         """ Initialization
         """
         # Environment and A3C parameters

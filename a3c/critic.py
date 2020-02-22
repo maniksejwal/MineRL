@@ -13,7 +13,9 @@ class Critic(Agent):
     def __init__(self, network, lr):
         Agent.__init__(self, lr)
         self.model = self.addHead(network)
-        self.discounted_r = K.placeholder(shape=(None,))
+        self.discounted_r_bin = K.placeholder(shape=(None,))
+        self.discounted_r_lin = K.placeholder(shape=(None,))
+        self.discounted_r = K.concatenate([self.discounted_r_bin, self.discounted_r_lin])
         # Pre-compile for threading
         self.model._make_predict_function()
 
@@ -23,12 +25,12 @@ class Critic(Agent):
         x = network.output
 
         binary_output = Dense(8, name='binary_prediction')(x)
-        linear_output = Dense(7, activation='linear', name='linear_prediction')(x)
+        linear_output = Dense(8, activation='linear', name='linear_prediction')(x)
 
-        linear_model = Model(inputs=network.input, outputs=linear_output)
-        binary_model = Model(inputs=network.input, outputs=binary_output)
+        self.linear_model = Model(inputs=network.input, outputs=linear_output)
+        self.binary_model = Model(inputs=network.input, outputs=binary_output)
 
-        model = Model(inputs=network.input, outputs=[binary_model.output, linear_model.output])
+        model = Model(inputs=network.input, outputs=[self.binary_model.output, self.linear_model.output])
         return model
 
     def optimizer(self):

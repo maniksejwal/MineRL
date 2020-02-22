@@ -66,7 +66,7 @@ def main():
 
     #model = xception.fancy_nn()
 
-    a3c = A3C(21, 15, (7,))
+    a3c = A3C()
 
     netr = 0
     for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=1, max_sequence_len=32):
