@@ -84,6 +84,8 @@ class A3C:
         """ Update actor and critic networks from experience
         """
         # Compute discounted rewards and Advantage (TD. Error)
+        print(states)
+        self.discount(rewards, done, states[-1])
         discounted_rewards = self.discount(rewards, done, states[-1])
         state_values = self.critic.predict(np.array(states))
         advantages = discounted_rewards - np.reshape(state_values, len(state_values))

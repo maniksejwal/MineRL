@@ -1,6 +1,6 @@
 import time
 #t = time.time()
-i = 0
+import pickle
 
 import xception
 import numpy as np
@@ -94,6 +94,7 @@ EVALUATION_STAGE = os.getenv('EVALUATION_STAGE', 'training')#''all')
 EXITED_SIGNAL_PATH = os.getenv('EXITED_SIGNAL_PATH', 'shared/exited')
 
 # Training Phase
+i = 0
 if EVALUATION_STAGE in ['training']:#['all', 'training']:
     aicrowd_helper.training_start()
     #main()
