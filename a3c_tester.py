@@ -81,7 +81,7 @@ def main():
         labels = xception.reshape_labels(labels)
         #labels = np.moveaxis(labels, -1, 0)
 
-        a3c.train_models(state, action, reward, done)
+        a3c.train_models(inputs, labels, reward, done)
 
         #model.fit(inputs, labels)
         #model.save("trained_network.hdf5")
