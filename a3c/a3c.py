@@ -66,6 +66,7 @@ class A3C:
         #     x = Dense(128, activation='relu')(x)
         # return Model(inp, x)
 
+    # unused atm - exploration and exploitation. not updated for minerl
     def policy_action(self, s):
         """ Use the actor's network to predict the next action to take, using the policy
         """
@@ -84,10 +85,11 @@ class A3C:
         """ Update actor and critic networks from experience
         """
         # Compute discounted rewards and Advantage (TD. Error)
-        self.discount(rewards, done, states[-1])
-        discounted_rewards = self.discount(rewards, done, states[-1])
-        state_values = self.critic.predict(np.array(states))
-        advantages = discounted_rewards - np.reshape(state_values, len(state_values))
+        # TODO increase the TD
+        # TD. lambda = 1
+        discounted_rewards = self.discount(rewards, done, states)
+        state_values = self.critic.predict(states)
+        advantages = discounted_rewards[0] - state_values
         # Networks optimization
         self.a_opt([states, actions, advantages])
         self.c_opt([states, discounted_rewards])

@@ -69,11 +69,11 @@ def main():
     a3c = A3C()
 
     netr = 0
-    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=1, max_sequence_len=32):
+    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=1, max_sequence_len=1):
         #print("state =", state, ", action =", action, ", reward =", reward, ", next_state =", next_state, ", done = ", done)
         #print('whocares')
 
-        inputs = xception.state_to_inputs(state) # returns [linear_inputs, binary_inputs]
+        inputs = xception.state_to_inputs(state) # returns [linear_inputs, image_inputs]
         inputs = xception.reshape_inputs(inputs)
         #inputs = np.moveaxis(inputs, -1, 0)
 
