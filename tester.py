@@ -1,6 +1,5 @@
-import time
-#t = time.time()
-i = 0
+import warnings
+warnings.filterwarnings('ignore')
 
 import xception
 import numpy as np
@@ -65,7 +64,7 @@ def main():
     model = xception.fancy_nn()
 
     netr = 0
-    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=1, max_sequence_len=2048):
+    for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=2, max_sequence_len=2048):
         #print("state =", state, ", action =", action, ", reward =", reward, ", next_state =", next_state, ", done = ", done)
         #print('whocares')
 
@@ -78,10 +77,10 @@ def main():
         #labels = np.moveaxis(labels, -1, 0)
 
         from keras.utils import plot_model
-        plot_model(model, to_file='model_deep.png', show_shapes=True)
+        plot_model(model, to_file='model_deep_new.png', show_shapes=True)
 
         model.fit(inputs, labels)
-        model.save("pretrained_network.hdf5")
+        model.save("pretrained_network_new.hdf5")
         #env.render()
 
     # for _ in range(1):
@@ -147,15 +146,15 @@ EVALUATION_STAGE = os.getenv('EVALUATION_STAGE', 'training')#''all')
 EXITED_SIGNAL_PATH = os.getenv('EXITED_SIGNAL_PATH', 'shared/exited')
 
 # Training Phase
+i = 0
 if EVALUATION_STAGE in ['training']:#['all', 'training']:
-    aicrowd_helper.training_start()
     #main()
     if i == 0:
         try:
             i+=1
+            aicrowd_helper.training_start()
             main()
             aicrowd_helper.training_end()
         except Exception as e:
-            print("__aicrowd_helper.training_error()__")
-            aicrowd_helper.training_error()
-            print(e)
+            if str(e).__contains__('An attempt has been made to start a new process before the'): pass
+            else: raise e

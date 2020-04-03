@@ -45,7 +45,7 @@ class A3C:
     def buildNetwork(self):
         """ Assemble shared layers
         """
-        return xception.fancy_nn()
+        return xception.base_nn()
 
         # inp = Input((self.env_dim))
         # # If we have an image, apply convolutional layers
@@ -91,7 +91,7 @@ class A3C:
         state_values = self.critic.predict(states)
         advantages = discounted_rewards[0] - state_values
         # Networks optimization
-        self.a_opt([states, actions, advantages])
+        self.a_opt([states, actions, advantages])                          # open the members before sending
         self.c_opt([states, discounted_rewards])
 
     def train(self, env, args, summary_writer):

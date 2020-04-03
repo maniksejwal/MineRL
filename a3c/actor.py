@@ -19,6 +19,8 @@ class Actor(Agent):
     def __init__(self, network, lr):
         Agent.__init__(self, lr)
         self.model = self.addHead(network)
+        self.vanilla_pl_input = K.placeholder(shape=(None, 21,))
+        self.img_pl_input = K.placeholder(shape=(None, 64, 64, 3))
         self.action_pl_bin = K.placeholder(shape=(None, 8))
         self.action_pl_lin = K.placeholder(shape=(None, 8))
         self.action_pl = K.concatenate([self.action_pl_bin, self.action_pl_lin])
@@ -38,7 +40,7 @@ class Actor(Agent):
         self.binary_model = Model(inputs=network.input, outputs=binary_output)
 
         model = Model(inputs=network.input, outputs=[self.binary_model.output, self.linear_model.output])
-        print(model.outputs)
+
         return model
 
         #out = Dense(self.out_dim, activation='softmax')(x)

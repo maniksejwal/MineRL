@@ -1,13 +1,12 @@
 import numpy as np
 from keras.optimizers import RMSprop
 
-import xception
-
 class Agent:
     """ Agent Generic Class
     """
 
     def __init__(self, lr, tau = 0.001):
+        self.model = None
         self.tau = tau
         self.rms_optimizer = RMSprop(lr=lr, epsilon=0.1, rho=0.99)
 

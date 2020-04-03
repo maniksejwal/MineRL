@@ -1,6 +1,6 @@
-import time
-#t = time.time()
-import pickle
+import warnings
+
+warnings.filterwarnings('ignore')
 
 import xception
 import numpy as np
@@ -21,18 +21,19 @@ from utility.parser import Parser
 from a3c.a3c import A3C
 
 import coloredlogs
-#coloredlogs.install(logging.DEBUG)
+
+# coloredlogs.install(logging.DEBUG)
 
 # All the evaluations will be evaluated on MineRLObtainDiamond-v0 environment
 MINERL_GYM_ENV = os.getenv('MINERL_GYM_ENV', 'MineRLObtainDiamond-v0')
 # You need to ensure that your submission is trained in under MINERL_TRAINING_MAX_STEPS steps
-MINERL_TRAINING_MAX_STEPS = int(os.getenv('MINERL_TRAINING_MAX_STEPS', 8000))#000))
+MINERL_TRAINING_MAX_STEPS = int(os.getenv('MINERL_TRAINING_MAX_STEPS', 8000))  # 000))
 # You need to ensure that your submission is trained by launching less than MINERL_TRAINING_MAX_INSTANCES instances
-MINERL_TRAINING_MAX_INSTANCES = int(os.getenv('MINERL_TRAINING_MAX_INSTANCES', 1))#5))
+MINERL_TRAINING_MAX_INSTANCES = int(os.getenv('MINERL_TRAINING_MAX_INSTANCES', 1))  # 5))
 # You need to ensure that your submission is trained within allowed training time.
 # Round 1: Training timeout is 15 minutes
 # Round 2: Training timeout is 4 days
-MINERL_TRAINING_TIMEOUT = int(os.getenv('MINERL_TRAINING_TIMEOUT_MINUTES', 15))#4*24*60))
+MINERL_TRAINING_TIMEOUT = int(os.getenv('MINERL_TRAINING_TIMEOUT_MINUTES', 15))  # 4*24*60))
 # The dataset is available in data/ directory from repository root.
 MINERL_DATA_ROOT = os.getenv('MINERL_DATA_ROOT', 'data/')
 
@@ -42,12 +43,13 @@ parser = Parser('performance/',
                 allowed_environment=MINERL_GYM_ENV,
                 maximum_instances=MINERL_TRAINING_MAX_INSTANCES,
                 maximum_steps=MINERL_TRAINING_MAX_STEPS,
-                raise_on_error=True, # False
+                raise_on_error=True,  # False
                 no_entry_poll_timeout=600,
-                submission_timeout=MINERL_TRAINING_TIMEOUT*60,
+                submission_timeout=MINERL_TRAINING_TIMEOUT * 60,
                 initial_poll_timeout=600)
 
-#print("time0 = ", time.time()-t)
+
+# print("time0 = ", time.time()-t)
 
 def main():
     """
@@ -58,52 +60,55 @@ def main():
     data = minerl.data.make(MINERL_GYM_ENV, data_dir=MINERL_DATA_ROOT)
 
     # Sample code for illustration, add your training code below
-    #env = gym.make(MINERL_GYM_ENV)
+    # env = gym.make(MINERL_GYM_ENV)
 
-    #actions = [env.action_space.sample() for _ in range(10)] # Just doing 10 samples in this example
+    # actions = [env.action_space.sample() for _ in range(10)] # Just doing 10 samples in this example
     xposes = []
-    #print("actions = ", actions)
+    # print("actions = ", actions)
 
-    #model = xception.fancy_nn()
+    # model = xception.fancy_nn()
 
     a3c = A3C()
 
     netr = 0
     for state, action, reward, next_state, done in data.sarsd_iter(num_epochs=1, max_sequence_len=1):
-        #print("state =", state, ", action =", action, ", reward =", reward, ", next_state =", next_state, ", done = ", done)
-        #print('whocares')
+        # print("state =", state, ", action =", action, ", reward =", reward, ", next_state =", next_state, ", done = ", done)
+        # print('whocares')
 
-        inputs = xception.state_to_inputs(state) # returns [linear_inputs, image_inputs]
+        inputs = xception.state_to_inputs(state)  # returns [linear_inputs, image_inputs]
         inputs = xception.reshape_inputs(inputs)
-        #inputs = np.moveaxis(inputs, -1, 0)
+        # inputs = np.moveaxis(inputs, -1, 0)
 
         labels = xception.label_to_output(action)
         labels = xception.reshape_labels(labels)
-        #labels = np.moveaxis(labels, -1, 0)
+        # labels = np.moveaxis(labels, -1, 0)
 
         a3c.train_models(inputs, labels, reward, done)
 
-        #model.fit(inputs, labels)
-        #model.save("trained_network.hdf5")
-        #env.render()
+        # model.fit(inputs, labels)
+        # model.save("trained_network.hdf5")
+        # env.render()
+
 
 # run.py
 import os
+
 EVALUATION_RUNNING_ON = os.getenv('EVALUATION_RUNNING_ON', None)
-EVALUATION_STAGE = os.getenv('EVALUATION_STAGE', 'training')#''all')
+EVALUATION_STAGE = os.getenv('EVALUATION_STAGE', 'training')  # ''all')
 EXITED_SIGNAL_PATH = os.getenv('EXITED_SIGNAL_PATH', 'shared/exited')
 
 # Training Phase
 i = 0
-if EVALUATION_STAGE in ['training']:#['all', 'training']:
-    aicrowd_helper.training_start()
-    #main()
+if EVALUATION_STAGE in ['training']:  # ['all', 'training']:
+    # main()
     if i == 0:
         try:
-            i+=1
+            i += 1
+            aicrowd_helper.training_start()
             main()
             aicrowd_helper.training_end()
         except Exception as e:
-            print("__aicrowd_helper.training_error()__")
-            aicrowd_helper.training_error()
-            print(e)
+            if str(e).__contains__('An attempt has been made to start a new process before the'):
+                pass
+            else:
+                raise e

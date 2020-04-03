@@ -199,6 +199,60 @@ def Xception(img_input=None):
     return model
 
 
+def base_nn(weights_path=None):
+    """Instantiates the Xception architecture.
+
+        Optionally loads weights pre-trained on ImageNet.
+        Note that the data format convention used by the model is
+        the one specified in your Keras config at `~/.keras/keras.json`.
+
+        Note that the default input image size for this model is 299x299.
+
+        # Arguments
+            weights_path = None:
+                Path from where weights are to be loaded into the model after compilation.
+
+        # Returns
+            A Keras model instance.
+
+        ## Raises
+        #    ValueError: in case of invalid argument for `weights`,
+        #        or invalid input shape.
+        #    RuntimeError: If attempting to run this model with a
+        #        backend that does not support separable convolutions.
+        """
+
+    vanilla_input = layers.Input(shape=(21,))
+    img_input = layers.Input(shape=(64, 64, 3))
+
+    vanilla = layers.Dense(15, name='hidden')(vanilla_input)
+    vanilla = models.Model(inputs=vanilla_input, outputs=vanilla, name='vanilla_hidden')
+
+    x = layers.concatenate([vanilla.output, Xception(img_input).output], name='hidden_concatenated')
+
+    x = layers.Dense(15, name='hidden_hidden')(x)
+
+    # MOVED INTO ACTOR AND CRITIC
+
+    # binary_output = layers.Dense(8, name='binary_prediction')(x)
+    # linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
+
+    # binary_model = models.Model(inputs=[vanilla_input, img_input], outputs=binary_output)
+    # linear_model = models.Model(inputs=[vanilla_input, img_input], outputs=linear_output)
+
+    # model = models.Model(inputs=[vanilla_input, img_input], outputs=[binary_model.output, linear_model.output])
+
+    model = models.Model(inputs=[vanilla_input, img_input], outputs=x)
+
+    from keras.utils import plot_model
+    plot_model(model, to_file='base_model.png', show_shapes=True)
+
+    model.compile(optimizer='adam', loss='mean_squared_error')
+    if weights_path != None: model.load_weights(weights_path)
+
+    return model
+
+
 def fancy_nn(weights_path=None):
     """Instantiates the Xception architecture.
 
@@ -234,18 +288,18 @@ def fancy_nn(weights_path=None):
 
     # MOVED INTO ACTOR AND CRITIC
 
-    #binary_output = layers.Dense(8, name='binary_prediction')(x)
-    #linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
+    binary_output = layers.Dense(8, name='binary_prediction')(x)
+    linear_output = layers.Dense(7, activation='linear', name='linear_prediction')(x)
 
-    #binary_model = models.Model(inputs=[vanilla_input, img_input], outputs=binary_output)
-    #linear_model = models.Model(inputs=[vanilla_input, img_input], outputs=linear_output)
+    binary_model = models.Model(inputs=[vanilla_input, img_input], outputs=binary_output)
+    linear_model = models.Model(inputs=[vanilla_input, img_input], outputs=linear_output)
 
-    #model = models.Model(inputs=[vanilla_input, img_input], outputs=[binary_model.output, linear_model.output])
+    model = models.Model(inputs=[vanilla_input, img_input], outputs=[binary_model.output, linear_model.output])
 
-    model = models.Model(inputs=[vanilla_input, img_input], outputs=x)
+    # model = models.Model(inputs=[vanilla_input, img_input], outputs=x)
 
     from keras.utils import plot_model
-    plot_model(model, to_file='model.png', show_shapes=True)
+    plot_model(model, to_file='fancy_model.png', show_shapes=True)
 
     model.compile(optimizer='adam', loss='mean_squared_error')
     if weights_path != None: model.load_weights(weights_path)
@@ -254,7 +308,7 @@ def fancy_nn(weights_path=None):
 
 
 def state_to_inputs(state):
-    linear_inputs = [
+    linear_inputs = np.array([
         state['equipped_items']['mainhand']['damage'],
         state['equipped_items']['mainhand']['maxDamage'],
         state['equipped_items']['mainhand']['type'],
@@ -276,7 +330,7 @@ def state_to_inputs(state):
         state['inventory']['torch'],
         state['inventory']['wooden_axe'],
         state['inventory']['wooden_pickaxe']
-    ]
+    ])
 
     img_input = state['pov']
 
@@ -304,13 +358,14 @@ def label_to_output(labels):
     ]
 
     linear_labels = [
-        [i[0] for i in labels['camera']],           #x
-        [i[1] for i in labels['camera']],           #y
+        [i[0] for i in labels['camera']],  # x
+        [i[1] for i in labels['camera']],  # y
         labels['craft'],
         labels['equip'],
         labels['nearbyCraft'],
         labels['nearbySmelt'],
-        labels['place']
+        labels['place'],
+        1
     ]
 
     return [binary_labels, linear_labels]
@@ -324,9 +379,36 @@ def reshape_labels(labels):
     # return [np.array(binary_labels).reshape((-1, 8)), np.array(linear_labels).reshape((-1, 7))]
 
 
-def outputs_to_action(outputs):
+def outputs_to_action_7(outputs):
     binary_labels = outputs[0]
     linear_labels = outputs[1]
+
+    from collections import OrderedDict
+
+    action = OrderedDict({
+        'attack': binary_labels[0],
+        'back': binary_labels[1],
+        'camera': np.array([linear_labels[0][0], linear_labels[0][1]], dtype=np.float32),
+        'craft': linear_labels[1],
+        'equip': linear_labels[2],
+        'forward': binary_labels[2],
+        'jump': binary_labels[3],
+        'left': binary_labels[4],
+        'nearbyCraft': linear_labels[3],
+        'nearbySmelt': linear_labels[4],
+        'place': linear_labels[5],
+        'right': binary_labels[5],
+        'sneak': binary_labels[6],
+        'sprint': binary_labels[7]
+    })
+
+    return action
+
+
+def outputs_to_action_8(outputs):
+    binary_labels = outputs[0]
+    linear_labels = [outputs[1][i] for i in
+                     range(len(outputs[1]) - 1)]  # the last one was only padding to support the model
 
     from collections import OrderedDict
 
@@ -360,7 +442,7 @@ if __name__ == '__main__':
     inputs = [state_to_inputs(minerl.env.obtain_observation_space.sample()),
               state_to_inputs(minerl.env.obtain_observation_space.sample())]
     inputs = reshape_inputs(inputs)
-    inputs = [np.array(inputs[0]).reshape((-1,21)), np.array(inputs[1]).reshape((-1,64,64,3))]
+    inputs = [np.array(inputs[0]).reshape((-1, 21)), np.array(inputs[1]).reshape((-1, 64, 64, 3))]
     labels = [label_to_output(minerl.env.obtain_action_space.sample()),
               label_to_output(minerl.env.obtain_action_space.sample())]
     labels = reshape_labels(labels)
